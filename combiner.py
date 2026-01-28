@@ -1,7 +1,7 @@
 f1 = open("mo.wav", "rb")
-f2 = open("mo2.wav", "rb")
+#f2 = open("mo2.wav", "rb")
 fw = open("combined.wav", "wb")
-
+'''
 # Read the first 44 bytes of the first file (WAV header)
 header1 = f1.read(44)
 header2 = f2.read(44)
@@ -14,7 +14,25 @@ size2 = int.from_bytes(header2[4:8], "little")
 
 new_size = size1 + size2
 header1[4:8] = new_size.to_bytes(4, "little")
+'''
+fade_samples = 44100 * 4 * 4
 
+while True:
+    sample_bytes = f1.read(2)
+    if not sample_bytes:
+        break
+
+    sample_int = int.from_bytes(sample_bytes, "little", signed=True)
+
+    if i < fade_samples:
+        factor = i / fade_samples
+    else:
+        factor = 1
+
+    sample_faded = int(sample_int * factor)
+
+    fw.write(sample_faded.to_bytes(2, "little", signed=True))
+    i += 1
 
 
 while True:
@@ -24,7 +42,7 @@ while True:
     fw.write(b)
 
 f1.close()
-
+'''
 #Make it so that the data size info and stuff is carried over into the first header
 for i in range(44):
     f2.read(1)
@@ -37,6 +55,7 @@ while True:
     fw.write(b)
 
 f2.close()
+'''
 fw.close()
 
 print("Hello World")
