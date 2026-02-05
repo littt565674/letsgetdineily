@@ -17,7 +17,8 @@ datasize2 = int.from_bytes(header2[data_pos2+4:data_pos2+8], "little")
 newdatasize = datasize1+datasize2
 new_file_size = newdatasize + 36
 
-overlap = 88000 * 16
+# maybe we change to 128 later if to un noticable
+overlap = 88000 * 64
 
 header1[4:8] = new_file_size.to_bytes(4, "little")
 header1[data_pos1+4:data_pos1+8] = newdatasize.to_bytes(4, "little")
@@ -29,12 +30,11 @@ data2 = f2.read(datasize2)
 
 fw.write(data1[:-overlap])
 
-for i in range(0, overlap):
-    if i % 2 == 0:
-        sample1 = int.from_bytes(data1[-overlap + i: -overlap + i + 2], "little")
-        sample2 = int.from_bytes(data2[i:i + 2], "little")
-        combined = sample1 + sample2
-        fw.write(combined.to_bytes(2, "little"))
+for i in range(0, overlap, 2):  # Step by 2, not 1!
+    sample1 = int.from_bytes(data1[-overlap + i: -overlap + i + 2], "little", signed=True)
+    sample2 = int.from_bytes(data2[i:i + 2], "little", signed=True)
+    combined = (sample1 + sample2) // 2
+    fw.write(combined.to_bytes(2, "little", signed=True))
 
 fw.write(data2[overlap:])
 
