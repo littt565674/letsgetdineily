@@ -1,3 +1,5 @@
+import fader
+
 f1 = open("mo.wav", "rb")
 f2 = open("SICKOMODE.wav", "rb")
 fw = open("combined.wav", "wb")
@@ -9,7 +11,7 @@ header1 = bytearray(header1)
 header2 = bytearray(header2)
 data_pos1 = header1.find(b"data")
 data_pos2 = header2.find(b"data")
-overlapsize = 3
+
 #gets the file size
 datasize1 = int.from_bytes(header1[data_pos1+4:data_pos1+8], "little")
 datasize2 = int.from_bytes(header2[data_pos2+4:data_pos2+8], "little")
@@ -33,7 +35,16 @@ fw.write(data1[:-overlap])
 for i in range(0, overlap, 2):  # Step by 2, not 1!
     sample1 = int.from_bytes(data1[-overlap + i: -overlap + i + 2], "little", signed=True)
     sample2 = int.from_bytes(data2[i:i + 2], "little", signed=True)
-    combined = (sample1 + sample2) // 2
+    progress = i/overlap
+    fade1 = fader.fadeout(progress)
+    fade2 = fader.fadein(progress)
+    fadedsample1 = int(sample1 * fade1)
+    fadedsample2 = int(sample2 * fade2)
+    combined = (fadedsample1 + fadedsample2)
+    if combined > 32767:
+        combined = 32767
+    elif combined < -32768:
+        combined = -32768
     fw.write(combined.to_bytes(2, "little", signed=True))
 
 fw.write(data2[overlap:])
